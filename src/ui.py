@@ -25,6 +25,28 @@ blue_accent_color="#325491"
 # fuentes
 text_font=("Segoe UI Semibold", 12)
 
+
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+def configurar_grafica(subpanel_grafica,window):
+    fig = Figure()
+    
+    # testing
+    t = np.arange(-10, 10, .01)
+    y1=[ x**2 for x in t]
+    y2=[ x**3 for x in t]
+    y3=[ x**4 for x in t]
+    y4=[ x**5 for x in t]
+    fig.add_subplot(111).plot(t, y1, t, y2, t, y3, t, y4)
+
+    fig.add_subplot(111).grid(True)
+    canvas = FigureCanvasTkAgg(fig, master=subpanel_grafica)
+    canvas.get_tk_widget().pack(anchor=tk.N, fill=tk.BOTH, expand=1)
+    return
+
+
 '''
     calcular un porcentaje de la pantalla
 
@@ -66,11 +88,10 @@ def configurar_boton_amarillo_misterio(boton: tk.Button,window):
     boton.configure(background=yellow_color,width=width,foreground=background_color,font=text_font,borderwidth=0,highlightthickness=0,activebackground=yellow_accent_color,activeforeground=background_color,pady=internal_padding)
     return
 
-def configurar_boton_azul_misterio(boton: tk.Button,window):
+def configurar_boton_azul(boton: tk.Button,window):
     width=calculate_screen_percent_size(window,2)
     internal_padding=calculate_screen_percent_size(window,2)
     boton.configure(background=blue_color,width=width,foreground=background_color,font=text_font,borderwidth=0,highlightthickness=0,activebackground=blue_accent_color,activeforeground=background_color,pady=internal_padding)
-    return
 
 def configurar_input_parametro(entry:tk.Entry,window):
     width=calculate_screen_percent_size(window,10)
@@ -244,25 +265,25 @@ def agregar_boton_exportar(panel,window):
 
 def configurar_panel_importar_exportar(panel,window):
     width = calculate_screen_percent_size(window,50)
-    panel_botones=tk.Frame(panel,width=width,background=background_color)
+    panel_botones=tk.Frame(panel,width=width,background=background_color,)
     agregar_boton_importar(panel_botones,window)
     agregar_boton_exportar(panel_botones,window)
     panel_botones.pack(anchor=tk.E, fill=tk.NONE)
     return
 
-def agregar_boton_variable(panel,window,parametro:str,descripcion:str,funcion:Callable):
+def agregar_boton_variable(panel,window,variable:str,descripcion:str,funcion:Callable):
     padding=calculate_screen_percent_size(window,5)
-    subpanel = tk.Frame(panel,background=background_color)
+    subpanel = tk.Frame(panel,background=background_color,highlightbackground=gray_color,highlightthickness=2,padx=padding)
     button = tk.Button(subpanel,command=funcion)
-    button.configure(text=parametro)
-    button_misterio = tk.Button(subpanel,command = lambda:create_message(parametro,descripcion))
+    button.configure(text=variable)
+    button_misterio = tk.Button(subpanel,command = lambda:create_message(variable,descripcion))
     button_misterio.configure(text="?")
 
-    #configurar_boton_azul(button,window)
-    configurar_boton_azul_misterio(button_misterio,window)
-    button_misterio.pack(anchor=tk.N,side=tk.LEFT,pady=padding,padx=padding)
-    button.pack(anchor=tk.N,side=tk.LEFT,pady=padding)
-    subpanel.pack(anchor=tk.N,fill=tk.X)
+    configurar_boton_azul(button,window)
+    configurar_boton_azul(button_misterio,window)
+    button.pack(side=tk.LEFT,pady=padding,padx=padding,expand=False)
+    button_misterio.pack(side=tk.RIGHT,pady=padding,padx=padding,expand=False)
+    subpanel.pack(side=tk.RIGHT,padx=padding,expand=False)
     return
 
 def configurar_panel_grafica(panel,window):
@@ -271,18 +292,48 @@ def configurar_panel_grafica(panel,window):
 
     subpanel_grafica=tk.Frame(panel,width=width,background=background_color)
     subpanel_botones=tk.Frame(panel,width=width,background=background_color)
+    
+    # TODO agregar botones de variables
     dummyfunc=lambda: print("TODO: dummy function")
-    botones= [  {"variable":"S(t)","funcion":dummyfunc,"descripcion":"S(t), es la cantidad de individuos susceptibles, es decir, el número de individuos en peligro de infectarse entre el total de la población."},
-                {"variable":"E(t)","funcion":dummyfunc,"descripcion":"E(t), es la cantidad de individuos infectados con la bacteria pero que no son capaces de transmitirla a otras personas."},
-                {"variable":"I(t)","funcion":dummyfunc,"descripcion":"I(t), es la cantidad de individuos infecciosos, es decir, el número de individuos infectados con síntomas que pueden transmitir la enfermedad."},
-                {"variable":"L(t)","funcion":dummyfunc,"descripcion":"L(t), es la cantidad de individuos en una población a los que se “les pierde el rastro”, son personas que comienzan a recibir terapia en el centro de salud, pero nunca regresan a los exámenes de seguimiento por diversas razones (e.g. larga duración del tratamiento, dificultad de desplazamiento, etc.). En este caso, el personal de salud puede determinar si están muertos, recuperados o no. "},
+    botones= [  {"variable":"S","funcion":dummyfunc,"descripcion":"S(t) es la cantidad de individuos susceptibles, es decir, el número de individuos en peligro de infectarse entre el total de la población."},
+                {"variable":"E","funcion":dummyfunc,"descripcion":"E(t) es la cantidad de individuos infectados con la bacteria pero que no son capaces de transmitirla a otras personas."},
+                {"variable":"I","funcion":dummyfunc,"descripcion":"I(t) es la cantidad de individuos infecciosos, es decir, el número de individuos infectados con síntomas que pueden transmitir la enfermedad."},
+                {"variable":"L","funcion":dummyfunc,"descripcion":"L(t) es la cantidad de individuos en una población a los que se “les pierde el rastro”, son personas que comienzan a recibir terapia en el centro de salud, pero nunca regresan a los exámenes de seguimiento por diversas razones (e.g. larga duración del tratamiento, dificultad de desplazamiento, etc.). En este caso, el personal de salud puede determinar si están muertos, recuperados o no. "},
                 ]
 
-    for boton in botones:
+    for boton in reversed(botones):
         agregar_boton_variable(subpanel_botones,window,boton["variable"],boton["descripcion"],boton["funcion"])
 
+    configurar_grafica(subpanel_grafica,window)
+
     subpanel_grafica.pack(anchor=tk.N,fill=tk.X,expand=True)
-    subpanel_botones.pack(anchor=tk.N,fill=tk.X,expand=True)
+    subpanel_botones.pack(anchor=tk.CENTER,expand=True)
+    return
+
+def configurar_input_tiempo_simulacion(panel,window,campo,funcion):
+    padding = calculate_screen_percent_size(window,5)
+    input = tk.Entry(panel)
+    input.bind("<Return>",funcion)
+    input.pack(anchor=tk.CENTER,side=tk.RIGHT,pady=padding,padx=padding)
+    return
+
+def configurar_panel_tiempo_simulacion(panel,window):
+    width = calculate_screen_percent_size(window,50)
+    subpanel_titulo=tk.Frame(panel,width=width,background=background_color)
+    subpanel_tiempo=tk.Frame(panel,width=width,background=background_color)
+    
+    dummyfunc=lambda: print("TODO: dummy function")
+
+    inputs=[    {"campo":"izquierda","funcion":dummyfunc},
+                {"campo":"centro","funcion":dummyfunc},
+                {"campo":"derecha","funcion":dummyfunc}]
+    
+    for input in inputs:
+        configurar_input_tiempo_simulacion(subpanel_tiempo,window,input["campo"],input["funcion"])
+    titulo=tk.Label(subpanel_titulo,text="Tiempo de simulación (Años)",font=text_font,background=background_color,foreground=text_color_dark)
+    titulo.pack(anchor=tk.N, fill=tk.X)
+    subpanel_titulo.pack(anchor=tk.N,fill=tk.NONE,expand=False)
+    subpanel_tiempo.pack(anchor=tk.N,fill=tk.NONE,expand=True)
     return
 
 def setup_window_size(window):
@@ -294,6 +345,7 @@ def setup_window_size(window):
     start_position_y = int((screen_height - height)/3)
     window.geometry("{}x{}+{}+{}".format(width, height, start_position_x, start_position_y))
 
+
 def configurar_panel_izquierdo(window):
     width = calculate_screen_percent_size(window,50)
     padding=calculate_screen_percent_size(window,5)
@@ -304,7 +356,7 @@ def configurar_panel_izquierdo(window):
     
     configurar_panel_importar_exportar(panel_entrada_salida,window)
     configurar_panel_grafica(panel_grafica,window)
-    #configurar_panel_tiempo_simulacion(panel_tiempo_simulacion,window)
+    configurar_panel_tiempo_simulacion(panel_tiempo_simulacion,window)
     panel_entrada_salida.pack(anchor=tk.N, fill=tk.X)
     panel_grafica.pack(anchor=tk.N, fill=tk.X)
     panel_tiempo_simulacion.pack(anchor=tk.N, fill=tk.X)
