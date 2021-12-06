@@ -1,8 +1,19 @@
 import tkinter as tk
 import tkinter.font as tkfont
 from typing import Callable
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+from pathlib import Path
+import scipy.integrate._ivp as ivp
 
 # variables globales para usar en las funciones
+
+# rutas
+
+assets_folder = Path(__file__).parent.parent.joinpath("assets")
+iconFile = assets_folder / "python_icon.ico"
 
 # paleta de colores
 background_color="#ffffff"
@@ -22,14 +33,49 @@ gray_accent_color="#494949"
 blue_color="#4472c4"
 blue_accent_color="#325491"
 
+# parámetros
+
+Λ       :float = None # Λ
+β       :float = None # β
+δ       :float = None # δ
+ρ       :float = None # ρ
+μ       :float = None # μ
+k       :float = None # k
+r1      :float = None # r1
+r2      :float = None # r2
+φ       :float = None # φ
+γ       :float = None # γ
+d1      :float = None # d1
+d2      :float = None # d2
+
+# funciones matemáticas
+# Susceptibles
+def S(S:float,I:float,L:float)->float:
+    return Λ-β*S*(I+δ*L)-μ*L
+
+# Exposed
+def E(S:float,E:float,I:float,L:float)->float:
+    return β*(1-ρ)*S*(I+δ*L)+r2*I-(μ+k*(1-r1))*E
+
+# Infected
+def I(S:float,E:float,I:float,L:float)->float:
+    return β*ρ*S*(I+δ*L)+k*(1-r1)*E+γ*L-(μ+d1+φ*(1-r2)+r2)*I
+# Lost
+def L(I:float,L:float)->float:
+    return  φ*(1-r2)*I-(μ-d2+γ)*L
+
 # fuentes
 text_font=("Segoe UI Semibold", 12)
 
+# implementación de métodos de solución
 
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
+# Euler hacia adelante
+# Euler hacia atrás
+# Euler modificado
+# Runge-Kutta 4
+# Runge-Kutta 2
+# Solve_IVP
+
 def configurar_grafica(subpanel_grafica,window):
     fig = Figure()
     
@@ -177,6 +223,7 @@ def agregar_boton_parametro(panel,window,parametro:str,descripcion:str,funcion:C
     button_misterio.pack(anchor=tk.N,side=tk.LEFT,pady=padding,padx=padding)
     button.pack(anchor=tk.N,side=tk.LEFT,pady=padding)
     input = tk.Entry(subpanel)
+    
     input.pack(anchor=tk.CENTER,side=tk.RIGHT,pady=padding,padx=padding)
     subpanel.pack(anchor=tk.N,fill=tk.X)
     return
@@ -196,7 +243,7 @@ def configurar_panel_metodo_solucion(window):
                 {"metodo":"Euler atrás","funcion":dummyfunc},
                 {"metodo":"Euler modificado","funcion":dummyfunc},
                 {"metodo":"Runge-Kutta 2","funcion":dummyfunc},
-                {"metodo":"Runge-Kutta 2","funcion":dummyfunc},
+                {"metodo":"Runge-Kutta 4","funcion":dummyfunc},
                 {"metodo":"Solve_IVP","funcion":dummyfunc}]
 
     for boton in botones:
@@ -380,7 +427,7 @@ def setup_window():
     window.configure(background=background_color)
 
     # agregar icono a la ventana
-    window.iconbitmap('assets/amongus.ico')
+    window.iconbitmap(iconFile.absolute())
     #window.iconbitmap('assets/python_icon.ico')
 
     '''
