@@ -1,8 +1,24 @@
 import tkinter as tk
 import tkinter.font as tkfont
 from typing import Callable
+from SistemaEcuacionesDif import *
+from Dato import *
+import pandas as pd
 
+# crear instancia de la ventana
+window = tk.Tk()
 # variables globales para usar en las funciones
+
+inputs=[]
+#Se crean 4 arrreglos y una instacia de la clase Dato para almacenar los valores generados en una gráfica
+# Y de esta manera porde exportarlos posteriormente (En la siguientes lineas solo se inicializan)
+T = []
+Y1 = []
+Y2 = []
+Y3 = []
+Y4 = []
+datos= Dato(T,Y1,Y2,Y3,Y4)
+
 
 # paleta de colores
 background_color="#ffffff"
@@ -93,10 +109,10 @@ def configurar_boton_azul(boton: tk.Button,window):
     internal_padding=calculate_screen_percent_size(window,2)
     boton.configure(background=blue_color,width=width,foreground=background_color,font=text_font,borderwidth=0,highlightthickness=0,activebackground=blue_accent_color,activeforeground=background_color,pady=internal_padding)
 
-def configurar_input_parametro(entry:tk.Entry,window):
+def configurar_input_parametro(entry:tk.Entry,window,Var):
     width=calculate_screen_percent_size(window,10)
 
-    entry.configure(width=width,font=text_font,background=background_color,foreground=text_color_dark,highlightbackground=gray_color)
+    entry.configure(width=width,font=text_font,background=background_color, textvariable=Var,foreground=text_color_dark,highlightbackground=gray_color)
     return
 
 def configurar_boton_gris(boton: tk.Button,window):
@@ -176,9 +192,10 @@ def agregar_boton_parametro(panel,window,parametro:str,descripcion:str,funcion:C
     configurar_boton_amarillo_misterio(button_misterio,window)
     button_misterio.pack(anchor=tk.N,side=tk.LEFT,pady=padding,padx=padding)
     button.pack(anchor=tk.N,side=tk.LEFT,pady=padding)
-    input = tk.Entry(subpanel)
+    input = tk.Entry(subpanel, textvariable=parametro)
     input.pack(anchor=tk.CENTER,side=tk.RIGHT,pady=padding,padx=padding)
     subpanel.pack(anchor=tk.N,fill=tk.X)
+    inputs.append(input)
     return
 
 def configurar_panel_metodo_solucion(window):
@@ -192,12 +209,12 @@ def configurar_panel_metodo_solucion(window):
 
     dummyfunc=lambda: print("TODO: dummy function")
 
-    botones=[   {"metodo":"Euler adelante","funcion":dummyfunc},
-                {"metodo":"Euler atrás","funcion":dummyfunc},
-                {"metodo":"Euler modificado","funcion":dummyfunc},
-                {"metodo":"Runge-Kutta 2","funcion":dummyfunc},
-                {"metodo":"Runge-Kutta 2","funcion":dummyfunc},
-                {"metodo":"Solve_IVP","funcion":dummyfunc}]
+    botones=[   {"metodo":"Euler adelante","funcion":graficarEulerFor},
+                {"metodo":"Euler atrás","funcion":graficarEulerBack},
+                {"metodo":"Euler modificado","funcion":graficarEulerMod},
+                {"metodo":"Runge-Kutta 2","funcion":graficarRK2},
+                {"metodo":"Runge-Kutta 4","funcion":graficarRK4},
+                {"metodo":"Solve_IVP","funcion":graficarRK45}]
 
     for boton in botones:
         agregar_boton_metodo(panel_botones,window,boton["metodo"],boton["funcion"])
@@ -207,6 +224,15 @@ def configurar_panel_metodo_solucion(window):
     panel_botones.pack(anchor=tk.N, fill=tk.Y,expand=False)
     panel.pack(side=tk.RIGHT, fill=tk.Y,padx=padding,pady=padding)
     return
+
+def prueba():
+    T, Y1, Y2, Y3, Y4 = calcular_Euler_Back(100,0.1,0.2,0.1,0.3,0.4,0.6,0.2,0.56,0.3,0.5,0.6, 1, 5)
+    datos.setvalores(T, Y1, Y2, Y3, Y4)
+    fig = graficar(1, 1, 1, 1, "EulerFor", 1, 5, T, Y1, Y2, Y3, Y4)
+
+    Plot = FigureCanvasTkAgg(fig, master=window)
+    Plot.draw()
+    Plot.get_tk_widget().place(x=100, y=60)
 
 def configurar_panel_parametros(window):
     width = calculate_screen_percent_size(window,25)
@@ -310,10 +336,11 @@ def configurar_panel_grafica(panel,window):
     subpanel_botones.pack(anchor=tk.CENTER,expand=True)
     return
 
-def configurar_input_tiempo_simulacion(panel,window,campo,funcion):
+def configurar_input_tiempo_simulacion(panel,window,var:str):
     padding = calculate_screen_percent_size(window,5)
-    input = tk.Entry(panel)
-    input.bind("<Return>",funcion)
+    input = tk.Entry(panel, textvariable=var)
+    inputs.append(input)
+    #input.bind("<Return>",funcion)
     input.pack(anchor=tk.CENTER,side=tk.RIGHT,pady=padding,padx=padding)
     return
 
@@ -327,9 +354,10 @@ def configurar_panel_tiempo_simulacion(panel,window):
     inputs=[    {"campo":"izquierda","funcion":dummyfunc},
                 {"campo":"centro","funcion":dummyfunc},
                 {"campo":"derecha","funcion":dummyfunc}]
-    
-    for input in inputs:
-        configurar_input_tiempo_simulacion(subpanel_tiempo,window,input["campo"],input["funcion"])
+
+    configurar_input_tiempo_simulacion(subpanel_tiempo, window,"ValorInicial")
+    configurar_input_tiempo_simulacion(subpanel_tiempo, window, "ValorFinal")
+    configurar_input_tiempo_simulacion(subpanel_tiempo, window,"y")
     titulo=tk.Label(subpanel_titulo,text="Tiempo de simulación (Años)",font=text_font,background=background_color,foreground=text_color_dark)
     titulo.pack(anchor=tk.N, fill=tk.X)
     subpanel_titulo.pack(anchor=tk.N,fill=tk.NONE,expand=False)
@@ -363,24 +391,275 @@ def configurar_panel_izquierdo(window):
     panel.pack(side=tk.RIGHT, fill=tk.BOTH,expand=True,padx=padding,pady=padding)
     return
 
+Lam = tk.StringVar()
+p= tk.StringVar()
+B = tk.StringVar()
+Mu = tk.StringVar()
+D = tk.StringVar()
+r2 = tk.StringVar()
+r1 = tk.StringVar()
+d1 = tk.StringVar()
+d2 = tk.StringVar()
+Si = tk.StringVar()
+g = tk.StringVar()
+k = tk.StringVar()
+ValorInicial = tk.StringVar()
+ValorFinal = tk.StringVar()
+y = tk.StringVar()
+
+
+opcion_s = tk.IntVar()
+opcion_e = tk.IntVar()
+opcion_i = tk.IntVar()
+opcion_l = tk.IntVar()
+
+
+
+
+
+def graficarEulerFor():
+
+
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal=False
+        tk.messagebox.showwarning('Error Formato', 'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+
+
+    if decimal:
+        T, Y1, Y2, Y3, Y4 = calcular_Euler_For(param_Lam, param_B, param_p, param_D, param_r2, param_Mu, param_Si, param_k, param_r1,param_g, param_d1, param_d2,diainic, diafinal)
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig=graficar( "EulerFor", diainic, diafinal, T, Y1, Y2, Y3, Y4)
+
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+
+def graficarEulerBack():
+
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal = False
+        tk.messagebox.showwarning('Error Formato',
+                                  'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+    if decimal:
+
+        T, Y1, Y2, Y3, Y4= calcular_Euler_Back(param_Lam, param_B, param_p, param_D, param_r2, param_Mu, param_Si, param_k, param_r1,param_g, param_d1, param_d2,diainic, diafinal)
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig = graficar( "EulerBack",
+                       diainic, diafinal, T, Y1, Y2, Y3, Y4)
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+
+
+
+def graficarEulerMod():
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal = False
+        tk.messagebox.showwarning('Error Formato',
+                                  'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+    if decimal:
+
+
+
+        T, Y1, Y2, Y3, Y4= calcular_Euler_Mod(param_Lam, param_B, param_p, param_D, param_r2, param_Mu, param_Si, param_k, param_r1,param_g, param_d1, param_d2,diainic, diafinal)
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig = graficar( "EulerMod",
+                       diainic, diafinal, T, Y1, Y2, Y3, Y4)
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+def graficarRK2():
+
+
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal = False
+        tk.messagebox.showwarning('Error Formato',
+                                  'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+    if decimal:
+
+
+        T, Y1, Y2, Y3, Y4= calcular_RK2(param_Lam,param_B,param_p,param_D,param_r2,param_Mu,param_Si,param_k,param_r1,param_g,param_d1,param_d2, diainic, diafinal)
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig = graficar( "RK2",
+                       diainic, diafinal, T, Y1, Y2, Y3, Y4)
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+
+
+def graficarRK4():
+
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal = False
+        tk.messagebox.showwarning('Error Formato',
+                                  'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+    if decimal:
+
+
+        T, Y1, Y2, Y3, Y4 = calcular_RK4(param_Lam, param_B, param_p, param_D, param_r2, param_Mu, param_Si, param_k, param_r1,param_g, param_d1, param_d2,diainic, diafinal)
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig = graficar( "RK4",
+                       diainic, diafinal, T, Y1, Y2, Y3, Y4)
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+
+
+def graficarRK45():
+
+
+    try:
+        param_B = float(inputs[1].get().strip())
+        param_Lam = float(inputs[0].get().strip())
+        param_p = float(inputs[3].get().strip())
+        param_Mu = float(inputs[4].get().strip())
+        param_D = float(inputs[2].get().strip())
+        param_r1 = float(inputs[6].get().strip())
+        param_r2 = float(inputs[7].get().strip())
+        param_d1 = float(inputs[10].get().strip())
+        param_d2 = float(inputs[11].get().strip())
+        param_g = float(inputs[9].get().strip())
+        param_Si = float(inputs[8].get().strip())
+        param_y = float(inputs[14].get().strip())
+        param_k = float(inputs[5].get().strip())
+        diainic = int(inputs[12].get().strip())
+        diafinal = int(inputs[13].get().strip())
+        decimal = True
+    except:
+        decimal = False
+        tk.messagebox.showwarning('Error Formato',
+                                  'Debe introducir los parámetros como decimales en parámetros Ej: (2.5) o en días con enteros Ej: (1) ')
+    if decimal:
+
+
+
+        T, Y = calcular_RK45(param_Lam, param_B, param_p, param_D, param_r2, param_Mu, param_Si, param_k, param_r1,param_g, param_d1, param_d2,diainic, diafinal)
+
+        Y1 = Y.y[0]
+        Y2 = Y.y[1]
+        Y3 = Y.y[2]
+        Y4 = Y.y[3]
+
+        datos.setvalores(T, Y1, Y2, Y3, Y4)
+        fig = graficar( "Ivp_Solve",
+                       diainic, diafinal, T, Y1, Y2, Y3, Y4)
+        Plot = FigureCanvasTkAgg(fig, master=window)
+        Plot.draw()
+        Plot.get_tk_widget().place(x=100, y=60)
+
+
 
 def setup_window():
-    # crear instancia de la ventana
-    window = tk.Tk()
+
     # agregar titulo a la ventana
     window.title("IBIO 2240 - Programación Científica | Proyecto final")
     '''
     asignar tamaño de la ventana
     '''
     setup_window_size(window)
-    
+
     # restringir tamaño máximo y mínimo de la ventana
     window.resizable(False, False)
     # agregar fondo blanco a la ventana
     window.configure(background=background_color)
 
     # agregar icono a la ventana
-    window.iconbitmap('assets/amongus.ico')
+    #window.iconbitmap(bitmap='assets/amongus.ico')
     #window.iconbitmap('assets/python_icon.ico')
 
     '''
